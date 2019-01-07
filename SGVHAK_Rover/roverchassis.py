@@ -141,6 +141,8 @@ class chassis:
   velocity for wheel travel
   """
 
+  use_rc_input = False
+
   def __init__(self):
     # List of wheels
     # Each wheel is a dictionary mapping name of a wheel to its specific info.
@@ -181,21 +183,21 @@ class chassis:
       rclaw.connect()
       self.motorcontrollers['roboclaw'] = rclaw
     except ValueError as ve:
-      logging.getLogger(__name__).error("Unable to initialize roboclaw: %s",str(ve))
+      logging.getLogger('werkzeug').error("Unable to initialize roboclaw: %s",str(ve))
 
     try:
       asw = adafruit_servo_wrapper.adafruit_servo_wrapper()
       asw.connect()
       self.motorcontrollers['adafruit_servo'] = asw
     except StandardError as se:
-      logging.getLogger(__name__).error("Unable to initialize Adafruit Servo HAT library: %s",str(se))
+      logging.getLogger('werkzeug').error("Unable to initialize Adafruit Servo HAT library: %s",str(se))
 
     try:
       lws = lewansoul_wrapper.lewansoul_wrapper()
       lws.connect()
       self.motorcontrollers['lewansoul'] = lws
     except StandardError as se:
-      logging.getLogger(__name__).error("Unable to initialize LewanSoul Servo Library: %s",str(se))
+      logging.getLogger('werkzeug').error("Unable to initialize LewanSoul Servo Library: %s",str(se))
 
   def ensureready(self):
     """
@@ -271,6 +273,7 @@ class chassis:
     Radius of zero indicates a turn-in-place movement. (Not yet implemented)
     Radius of infinity indicates movement in a straight line.
     """
+    # logging.getLogger('werkzeug').error("move_velocity_radius(%f, %f)" % (velocity, radius))
     if abs(radius) < self.minRadius:
       # This chassis configuration could not make that tight of a turn.
       raise ValueError("Radius below minimum")

@@ -23,13 +23,12 @@ SOFTWARE.
 """
 from subprocess import call
 import socket
-from SGVHAK_Rover import app
+from SGVHAK_Rover import app, chassis
 from flask import flash, json, redirect, render_template, request, url_for
 import roverchassis
 
 # Rover chassis geometry, including methods to calculate wheel angle and
 # velocity based on chassis geometry.
-chassis = roverchassis.chassis()
 
 class main_menu:
 
@@ -98,7 +97,8 @@ class main_menu:
       else:
         radius = -chassis.minRadius - (chassis.maxRadius-chassis.minRadius) * (100+pct_angle)/100.0
 
-      chassis.move_velocity_radius(magnitude, radius)
+      if chassis.use_rc_input == False:
+          chassis.move_velocity_radius(magnitude, radius)
 
       return json.jsonify({'Success':1})
 

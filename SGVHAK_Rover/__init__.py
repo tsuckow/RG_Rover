@@ -21,9 +21,35 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+import atexit
 import os
 from flask import Flask
-app = Flask(__name__)
+import SGVHAK_Rover.roverchassis
+
+chassis = roverchassis.chassis()
+import rc_receiver
+
+rcReceiverThread = rc_receiver.RCReader(args = (chassis, ))
+rcReceiverThread.setDaemon(True)
+
+def create_app():
+    app = Flask(__name__)
+
+    def interrupt():
+        global rcReceiverThread
+        yourThread.cancel()
+
+    # Initiate
+    global rcReceiverThread
+
+    # When you kill Flask (SIGTERM), clear the trigger for the next thread
+    atexit.register(interrupt)
+
+    rcReceiverThread.start()
+
+    return app
+
+app = create_app()
 
 # Randomly generated key means session cookies will not be usable across
 # instances. This is acceptable for now but may need changing later.
