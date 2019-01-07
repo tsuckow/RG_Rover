@@ -2,16 +2,16 @@
   {
     "name": "front_left",
     "rolling": [
-      "roboclaw",
-      128,
-      2,
+      "lewansoul",
+      10,
+      500,
       false
     ],
     "steering": [
-      "roboclaw",
-      131,
-      2,
-      true
+      "lewansoul",
+      9,
+      510,
+      false
     ],
     "x": -7.254,
     "y": 10.5
@@ -19,16 +19,16 @@
   {
     "name": "front_right",
     "rolling": [
-      "roboclaw",
-      128,
-      1,
-      false
+      "lewansoul",
+      2,
+      500,
+      true
     ],
     "steering": [
-      "roboclaw",
-      131,
+      "lewansoul",
       1,
-      true
+      460,
+      false
     ],
     "x": 7.254,
     "y": 10.5
@@ -36,9 +36,9 @@
   {
     "name": "mid_left",
     "rolling": [
-      "roboclaw",
-      129,
-      2,
+      "lewansoul",
+      8,
+      500,
       false
     ],
     "steering": null,
@@ -48,10 +48,10 @@
   {
     "name": "mid_right",
     "rolling": [
-      "roboclaw",
-      129,
-      1,
-      false
+      "lewansoul",
+      3,
+      500,
+      true
     ],
     "steering": null,
     "x": 10.073,
@@ -60,16 +60,16 @@
   {
     "name": "rear_left",
     "rolling": [
-      "roboclaw",
-      130,
-      2,
+      "lewansoul",
+      6,
+      500,
       false
     ],
     "steering": [
-      "roboclaw",
-      132,
-      2,
-      true
+      "lewansoul",
+      7,
+      440,
+      false
     ],
     "x": -7.254,
     "y": -10.5
@@ -77,16 +77,16 @@
   {
     "name": "rear_right",
     "rolling": [
-      "roboclaw",
-      130,
-      1,
-      false
+      "lewansoul",
+      4,
+      500,
+      true
     ],
     "steering": [
-      "roboclaw",
-      132,
-      1,
-      true
+      "lewansoul",
+      5,
+      500,
+      false
     ],
     "x": 7.254,
     "y": -10.5
