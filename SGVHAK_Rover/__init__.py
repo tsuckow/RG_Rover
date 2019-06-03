@@ -26,18 +26,28 @@ import os
 from flask import Flask
 import SGVHAK_Rover.roverchassis
 
+# Rover chassis geometry, including methods to calculate wheel angle and
+# velocity based on chassis geometry.
 chassis = roverchassis.chassis()
-import rc_receiver
 
-rcReceiverThread = rc_receiver.RCReader(args = (chassis, ))
-rcReceiverThread.setDaemon(True)
+rcReceiverThread = None
+
+try:
+    import rc_receiver
+
+    rcReceiverThread = rc_receiver.RCReader(args = (chassis, ))
+    rcReceiverThread.setDaemon(True)
+except:
+    pass
 
 def create_app():
     app = Flask(__name__)
 
     def interrupt():
         global rcReceiverThread
-        yourThread.cancel()
+
+        if rcReceiverThread != None:
+            rcReceiverThread.cancel()
 
     # Initiate
     global rcReceiverThread
@@ -45,7 +55,8 @@ def create_app():
     # When you kill Flask (SIGTERM), clear the trigger for the next thread
     atexit.register(interrupt)
 
-    rcReceiverThread.start()
+    if rcReceiverThread != None:
+        rcReceiverThread.start()
 
     return app
 

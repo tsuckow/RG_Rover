@@ -27,9 +27,6 @@ from SGVHAK_Rover import app, chassis
 from flask import flash, json, redirect, render_template, request, url_for
 import roverchassis
 
-# Rover chassis geometry, including methods to calculate wheel angle and
-# velocity based on chassis geometry.
-
 class main_menu:
 
   @app.route('/')
@@ -243,13 +240,13 @@ class main_menu:
       action = request.form.get('power_command',None)
 
       if action == "shutdown":
-        r = call("systemctl poweroff", shell=True)
+        r = call("sudo systemctl poweroff", shell=True)
         if r == 0:
           flash("Shutting down...", "success")
         else:
           flash("Shutdown attempt failed with error {0}".format(r), "error")
       elif action == "reboot":
-        r = call("systemctl reboot", shell=True)
+        r = call("sudo systemctl reboot", shell=True)
         if r == 0:
           flash("Rebooting...", "success")
         else:
