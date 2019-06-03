@@ -2,15 +2,14 @@
   {
     "name": "front_left",
     "rolling": [
-      "lewansoul",
-      10,
-      500,
+      "teensy",
+      1,
       false
     ],
     "steering": [
       "lewansoul",
       9,
-      510,
+      478,
       false
     ],
     "x": -7.254,
@@ -19,15 +18,14 @@
   {
     "name": "front_right",
     "rolling": [
-      "lewansoul",
-      2,
-      500,
-      true
+      "teensy",
+      0,
+      false
     ],
     "steering": [
       "lewansoul",
       1,
-      460,
+      464,
       false
     ],
     "x": 7.254,
@@ -36,9 +34,8 @@
   {
     "name": "mid_left",
     "rolling": [
-      "lewansoul",
-      8,
-      500,
+      "teensy",
+      3,
       false
     ],
     "steering": null,
@@ -48,10 +45,9 @@
   {
     "name": "mid_right",
     "rolling": [
-      "lewansoul",
-      3,
-      500,
-      true
+      "teensy",
+      2,
+      false
     ],
     "steering": null,
     "x": 10.073,
@@ -60,15 +56,14 @@
   {
     "name": "rear_left",
     "rolling": [
-      "lewansoul",
-      6,
-      500,
+      "teensy",
+      5,
       false
     ],
     "steering": [
       "lewansoul",
       7,
-      440,
+      460,
       false
     ],
     "x": -7.254,
@@ -77,14 +72,13 @@
   {
     "name": "rear_right",
     "rolling": [
-      "lewansoul",
+      "teensy",
       4,
-      500,
-      true
+      false
     ],
     "steering": [
       "lewansoul",
-      5,
+      2,
       500,
       false
     ],
