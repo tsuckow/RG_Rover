@@ -185,21 +185,38 @@ class chassis:
       rclaw.connect()
       self.motorcontrollers['roboclaw'] = rclaw
     except ValueError as ve:
-      logging.getLogger('werkzeug').error("Unable to initialize roboclaw: %s",str(ve))
+      logging.getLogger(__name__).error("Unable to initialize roboclaw: %s",str(ve))
 
     try:
       asw = adafruit_servo_wrapper.adafruit_servo_wrapper()
       asw.connect()
       self.motorcontrollers['adafruit_servo'] = asw
     except StandardError as se:
-      logging.getLogger('werkzeug').error("Unable to initialize Adafruit Servo HAT library: %s",str(se))
+      logging.getLogger(__name__).error("Unable to initialize Adafruit Servo HAT library: %s",str(se))
 
     try:
       lws = lewansoul_wrapper.lewansoul_wrapper()
       lws.connect()
       self.motorcontrollers['lewansoul'] = lws
     except StandardError as se:
-      logging.getLogger('werkzeug').error("Unable to initialize LewanSoul Servo Library: %s",str(se))
+      logging.getLogger(__name__).error("Unable to initialize LewanSoul Servo Library: %s",str(se))
+
+    try:
+      has_teensy = False
+
+      try:
+          import teensy_motors_wrapper
+
+          has_teensy = True
+      except:
+          pass
+
+      if has_teensy:
+          teensy = teensy_motors_wrapper.teensy_motors_wrapper()
+          teensy.connect()
+          self.motorcontrollers['teensy'] = teensy
+    except StandardError as se:
+      logging.getLogger(__name__).error("Unable to initialize Teensy Motors Library: %s",str(se))
 
     try:
       dms = dynamixel_wrapper.dynamixel_wrapper()
@@ -267,7 +284,7 @@ class chassis:
         if steeringtype in self.motorcontrollers:
           steeringcontrol = self.motorcontrollers[steeringtype]
         else:
-          raise ValueError("Unknown motor control type")
+          raise ValueError("Unknown motor control type %s steering -> %s" % (name, steeringtype))
 
       # Add the newly created roverwheel object to wheels dictionary.
       self.wheels[name] = roverwheel(name, wheel['x'], wheel['y'],
@@ -289,7 +306,6 @@ class chassis:
     Radius of zero indicates a turn-in-place movement. (Not yet implemented)
     Radius of infinity indicates movement in a straight line.
     """
-    # logging.getLogger('werkzeug').error("move_velocity_radius(%f, %f)" % (velocity, radius))
     if abs(radius) < self.minRadius:
       # This chassis configuration could not make that tight of a turn.
       raise ValueError("Radius below minimum")
