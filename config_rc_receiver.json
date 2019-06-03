@@ -1,0 +1,7 @@
+{
+  "connect": {
+    "baudrate": 115200,
+    "port": "/dev/teensy-rc",
+    "timeout": 1.0
+  }
+}
