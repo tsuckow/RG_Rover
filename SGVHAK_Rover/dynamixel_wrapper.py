@@ -34,10 +34,10 @@ def bytetohex(bytearray):
   """
   return ''.join('{:02x}'.format(x) for x in bytearray)
 
-class lewansoul_wrapper:
+class dynamixel_wrapper:
   """
-  Class that implements the rover motor control methods for serial bus
-  servo by LewanSoul. Specifically their model LX-16A.
+  Class that implements the rover motor control methods for Dynamixel serial
+  bus servo by Robotis. Specifically the model AX-12A.
   """
   def __init__(self):
     self.sp = None
@@ -45,7 +45,7 @@ class lewansoul_wrapper:
   def check_sp(self):
     """ Raises error if we haven't opened serial port yet. """
     if self.sp == None:
-      raise ValueError("LewanSoul serial communication is not available.")
+      raise ValueError("Dynamixel serial communication is not available.")
 
   def connect(self):
     """
@@ -54,7 +54,7 @@ class lewansoul_wrapper:
     """
 
     # Read parameter file
-    config = configuration.configuration("lewansoul")
+    config = configuration.configuration("dynamixel")
     connectparams = config.load()['connect']
 
     # Open serial port with parameters
@@ -77,17 +77,17 @@ class lewansoul_wrapper:
 
   def send(self, servo_id, command, data=None):
     """
-    Send a command to a LewanSoul servo, taking care of the header and
+    Send a command to a Dynamixel servo, taking care of the header and
     checksum calculation for a command packet.
     """
     self.check_sp()
-    packet = [0x55, 0x55]
+    packet = [0xFF, 0xFF]
 
     if servo_id < 0 or servo_id > 0xfe:
       raise ValueError("Servo ID {} is out of valid range".format(servo_id))
     packet.append(servo_id)
 
-    length = 3
+    length = 2
     if data:
       length = length + len(data)
     #TODO: check maximum length
@@ -119,17 +119,19 @@ class lewansoul_wrapper:
     self.check_sp()
     return bytearray(self.sp.read(length))
 
-  def read_parsed(self, length=100, expectedid=None, expectedcmd=None, expectedparams=None):
+  def read_parsed(self, length=100, expectedid=None, expectederr=None, expectedparams=None):
     """
     Reads up to 'length' bytes and parse it according to pack format spec
-    from "LewanSoul Bus servo Communication Protocol" PDF:
+    from Robotis e-Manual
+    http://emanual.robotis.com/docs/en/dxl/protocol1/#status-packet
+    http://support.robotis.com/en/techsupport_eng.htm#product/actuator/dynamixel/ax_series/dxl_ax_actuator.htm
 
     0     1     2     3     4     [ ... ]
-    0x55  0x55  ID    Len   Cmd   Param1... ParamN  Checksum
+    0xFF  0xFF  ID    Len   Err   Param1... ParamN  Checksum
 
-    Length of data is all bytes after ID, including length byte.
-    Packet with no parameters has length of 3 bytes, plus header+ID = 6 bytes total.
-    Checksum = (~(ID+Length+Cmd+Param1+...+ParamN)) & 0xFF
+    Length of data is number of parameters plus checksum.
+    Packet with no parameters has length of 2 bytes, plus header+ID+Length = 6 bytes total.
+    Checksum = (~(ID+Length+Err+Param1+...+ParamN)) & 0xFF
 
     - -
 
@@ -148,13 +150,13 @@ class lewansoul_wrapper:
       raise ValueError("Need at least 6 bytes for a valid packet, received {}".format(len(r)))
 
     # Check header
-    if r[0] != 0x55 or r[1] != 0x55:
-      raise ValueError("Response header is {:02x} {:02x}, expected 0x55 0x55".format(r[0], r[1]))
+    if r[0] != 0xFF or r[1] != 0xFF:
+      raise ValueError("Response header is {:02x} {:02x}, expected 0xFF 0xFF".format(r[0], r[1]))
 
     # Verify length
     rlen = r[3]
-    if rlen+3 != len(r):
-      raise ValueError("Packet claims to have {} bytes of data + 3 bytes of header, but we retrieved {} bytes.".format(rlen, len(r)))
+    if rlen+4 != len(r):
+      raise ValueError("Packet claims to have {} bytes of data + 4 bytes of header, but we retrieved {} bytes.".format(rlen, len(r)))
 
     # Verify checksum
     checksum = 0
@@ -170,42 +172,42 @@ class lewansoul_wrapper:
     if expectedid != None and expectedid != rid:
       raise ValueError("Response stamped with ID {}, expected {}".format(rid, expectedid))
 
-    # If an expected command is given, compare against command in the message.
-    rcmd = r[4]
-    if expectedcmd != None and expectedcmd != rcmd:
-      raise ValueError("Response command {}, expected {}".format(rcmd, expectedcmd))
+    # If an expected error is given, compare against error in the message.
+    rerr = r[4]
+    if expectederr != None and expectederr != rerr:
+      raise ValueError("Response error {}, expected {}".format(rerr, expectederr))
 
     # Examine parameters, if any.
-    if rlen > 3:
+    if rlen > 2:
       rparams = bytearray(r[5:-1])
-      if expectedparams != None and expectedparams != len(rparams):
+      if expectedparams and expectedparams != len(rparams):
         raise ValueError("Received {} bytes of parameters, expected {}".format(len(rparams),expectedparams))
     else:
       rparams = None
-      if expectedparams != None and expectedparams != 0:
+      if expectedparams and expectedparams != 0:
         raise ValueError("Received {} bytes of parameters, expected none".format(len(rparams)))
 
     # Return results in a tuple
-    return (rid, rcmd, rparams)
+    return (rid, rerr, rparams)
 
   def version(self, id):
     """ Identifier string for this motor controller """
-    return "LewanSoul"
+    return "Dynamixel"
 
   @staticmethod
   def check_id(id):
     """ Verifies servo ID is within range and inverted status is boolean"""
     if not isinstance(id, (tuple,list)):
-      raise ValueError("LewanSoul identifier must be a tuple")
+      raise ValueError("Dynamixel identifier must be a tuple")
 
     if not isinstance(id[0], int):
-      raise ValueError("LewanSoul servo address must be an integer")
+      raise ValueError("Dynamixel servo address must be an integer")
 
     if id[0] < 0 or id[0] > 253:
-      raise ValueError("LewanSoul servo address {} outside of valid range 0-253".format(id[0]))
+      raise ValueError("Dynamixel servo address {} outside of valid range 0-253".format(id[0]))
 
     if not isinstance(id[1], int):
-      raise ValueError("LewanSoul servo center position must be an integer")
+      raise ValueError("Dynamixel servo center position must be an integer")
 
     if not isinstance(id[2], bool):
       raise ValueError("Inverted status must be a boolean")
@@ -217,52 +219,55 @@ class lewansoul_wrapper:
     sid, center, inverted = self.check_id(id)
     self.check_sp()
 
+    if inverted:
+      percentage = percentage * -1
+
     pct = int(percentage)
     if abs(pct) > 100:
       raise ValueError("Motor power percentage {0} outside valid range from 0 to 100.".format(pct))
 
-    # LewanSoul API wants power expressed between -1000 and 1000, so multiply by 10.
-    power = percentage*10
+    # Dynamixel API wants power expressed from 0 to 2047. 0-1023 CCW, 1024-2047 CW
+    power = abs(percentage)*1023/100
 
-    if inverted:
-      power = power * -1
+    if percentage >= 0:
+      power = power + 1024
 
-    self.send(sid, 29, bytearray(pack('hh',1,power)))
+    self.send(sid, 3, bytearray(pack('=Bh',32, power)))
+    self.read_parsed(length=6, expectedid=sid, expectederr=0, expectedparams=0)
 
   def set_max_current(self, id, current):
-    """ LewanSoul does not support overpower protection. """
     sid, center, inverted = self.check_id(id)
     self.check_sp()
     # Does nothing
 
   def init_velocity(self, id):
-    """ Sets LewanSoul into motor mode and speed zero """
     sid, center, inverted = self.check_id(id)
     self.check_sp()
 
-    self.send(sid, 29, bytearray(pack('hh',1,0)))
+    self.send(sid, 3, bytearray(pack('=Bhh',6, 0, 0))) # Make sure we're in wheel mode
+    self.read_parsed(length=6, expectedid=sid, expectederr=0, expectedparams=0)
 
   def velocity(self,id,pct_velocity):
     """
     Runs the specified servo in motor mode at specified velocity
-    In case of LewanSoul servos, it is the same as power_percent.
+    In case of Dynamixel servos, it is the same as power_percent.
     """
     self.power_percent(id,pct_velocity)
 
   def init_angle(self, id):
     """
-    Sets the LewanSoul into servo mode and move to center over 2 seconds
+    Sets the Dynamixel into servo position mode
     """
     sid, center, inverted = self.check_id(id)
     self.check_sp()
 
-    self.send(sid, 29, (0,0,0,0)) # Servo mode
-    self.send(sid, 1, bytearray(pack('hh', center, 2000)))
+    self.send(sid, 3, bytearray(pack('=Bhh',6, 0, 1023))) # Make sure we're in joint mode
+    self.read_parsed(length=6, expectedid=sid, expectederr=0, expectedparams=0)
 
   def maxangle(self, id):
     sid, center, inverted = self.check_id(id)
     self.check_sp()
-    return 120
+    return 150
 
   def angle(self, id, angle):
     sid, center, inverted = self.check_id(id)
@@ -271,13 +276,13 @@ class lewansoul_wrapper:
     if abs(angle) > 95:
       raise ValueError("Steering angle {} exceeded expected maximum of 90".format(angle))
 
-    delta = angle * (500.0/120.0) # 500 count/ 120 degrees = counts per degree.
-
     if inverted:
-      delta = delta * -1
+      angle = angle * -1
 
-    self.send(sid, 29, (0,0,0,0)) # Servo mode
-    self.send(sid, 1, bytearray(pack('hh', center+delta, 200)))
+    delta = 512 + 511*(angle/150.0) # 512 count/ 150 degrees = counts per degree.
+
+    self.send(sid, 3, bytearray(pack('=Bhh',30, delta, 0)))
+    self.read_parsed(length=6, expectedid=sid, expectederr=0, expectedparams=0)
 
   def steer_setzero(self, id):
     sid, center, inverted = self.check_id(id)
@@ -286,20 +291,20 @@ class lewansoul_wrapper:
 
   def input_voltage(self, id):
     """
-    Query LewanSoul servo's internal voltage monitor
+    Query Dynamixel servo's internal voltage monitor
     """
     sid, center, inverted = self.check_id(id)
     self.check_sp()
 
-    self.send(sid, 27)
-    (sid, cmd, params) = self.read_parsed(length=8, expectedcmd=27, expectedparams=2)
-    millivolts = unpack('h', params)[0]
+    self.send(sid, 2, (42,1))
+    (sid, err, params) = self.read_parsed(length=7,expectedid=sid, expectederr=0, expectedparams=1)
+    voltage = params[0]
 
-    return millivolts/1000.0
+    return voltage/10.0
 
 if __name__ == "__main__":
   """
-  Command line interface to work with LewanSoul serial bus servos.
+  Command line interface to work with serial bus servos.
   Implements a subset of the servo's functionality
   * Move to position over time. (Servo mode)
   * Spin at a specified speed. (Motor mode)
@@ -309,73 +314,94 @@ if __name__ == "__main__":
   """
   import argparse
 
-  parser = argparse.ArgumentParser(description="LewanSoul Serial Servo Command Line Utility")
+  parser = argparse.ArgumentParser(description="Dynamixel Serial Servo Command Line Utility")
 
   parser.add_argument("-id", "--id", help="Servo identifier integer 0-253. 254 is broadcast ID.", type=int, default=1)
-  parser.add_argument("-t", "--time", help="Time duration for action", type=int, default=0)
+  parser.add_argument("-p", "--speed", help="Speed for move (0-1023) 0=max uncontrolled 1=slowest controlled 1023=fastest controlled", type=int, default=0)
   group = parser.add_mutually_exclusive_group()
-  group.add_argument("-m", "--move", help="Move servo to specified position 0-1000", type=int)
+  group.add_argument("-m", "--move", help="Move servo to specified position 0-1023", type=int)
   group.add_argument("-q", "--queryid", help="Query for servo ID", action="store_true")
   group.add_argument("-r", "--rename", help="Rename servo identifier", type=int)
-  group.add_argument("-s", "--spin", help="Spin the motor at a specified speed from -1000 to 1000", type=int)
+  group.add_argument("-s", "--spin", help="Spin the motor at a specified speed from 0 to 2047", type=int)
   group.add_argument("-u", "--unload", help="Power down servo motor", action="store_true")
   group.add_argument("-v", "--voltage", help="Read current input voltage", action="store_true")
+  group.add_argument("-l", "--location", help="Read current locaton.", action="store_true")
+  group.add_argument("-e", "--reset", help="Reset to factory defaults.", action="store_true")
   args = parser.parse_args()
 
-  c = lewansoul_wrapper()
+  c = dynamixel_wrapper()
   c.connect()
 
   if args.move != None: # Explicit check against None because zero is a valid value
-    if args.move < 0 or args.move > 1000:
-      print("Servo move destination {} is outside valid range of 0 to 1000 (1000 = 240 degrees)".format(args.move))
-    elif args.time < 0 or args.time > 30000:
-      print("Servo move time duration {} is outside valid range of 0 to 30000 milliseconds".format(args.time))
+    if args.move < 0 or args.move > 1023:
+      print("Servo move destination {} is outside valid range of 0 to 1023 (1023 = 300 degrees)".format(args.move))
+    elif args.speed < 0 or args.speed > 1023:
+      print("Servo move speed {} is outside valid range of 0 to 1023".format(args.speed))
     else:
-      print("Moving servo {} to position {}".format(args.id, args.move))
-      c.send(args.id, 29, (0,0,0,0)) # Turn on servo mode (in case it was previously in motor mode)
-      c.send(args.id, 1, bytearray(pack('hh', args.move, args.time)))
+      if args.speed == 0:
+        speedarg = "max uncontrolled speed"
+      else:
+        speedarg = "controlled speed {}".format(args.speed)
+      print("Moving servo {} to position {} at {}".format(args.id, args.move, speedarg))
+      c.send(args.id, 3, bytearray(pack('=Bhh',6, 0, 1023))) # Make sure we're in joint mode
+      c.read_parsed(length=6, expectedid=args.id, expectederr=0, expectedparams=0)
+      c.send(args.id, 3, bytearray(pack('=Bhh',30, args.move, args.speed)))
+      c.read_parsed(length=6, expectedid=args.id, expectederr=0, expectedparams=0)
   elif args.queryid:
     print("Broadcasting servo ID query")
-    c.send(0xfe, 14) # Broadcast and ask to report ID
-    (sid, cmd, params) = c.read_parsed(length=7, expectedcmd=14, expectedparams=1)
-    if sid != params[0]:
-      raise ValueError("ID response stamped with {} but payload says {}".format(sid, params[0]))
+    c.send(0xfe, 1) # Broadcast and ask to report ID
+    (sid, err, params) = c.read_parsed(length=6, expectederr=0, expectedparams=0)
     print("Servo ID {} responded to query".format(sid))
   elif args.rename:
     print("Checking the specified servo ID {} is on the serial network.".format(args.id))
-    c.send(args.id, 14) # Ask for current servo ID
-    (sid, cmd, params) = c.read_parsed(length=7, expectedcmd=14, expectedparams=1)
-    if sid != args.id or params[0] != args.id:
+    c.send(args.id, 1) # Ask for current servo ID
+    (sid, err, params) = c.read_parsed(length=6, expectederr=0, expectedparams=0)
+    if sid != args.id:
       print("Unexpected answer from servo {} when verifying servo {} is on the network.".format(sid, args.id))
     else:
       print("Checking the specified destination servo ID {} is not already taken.".format(args.rename))
-      c.send(args.rename, 14)
+      c.send(args.rename, 1)
       expectempty=c.read_raw()
       if len(expectempty) > 0:
         raise ValueError("Someone answers to servo ID {} on the network, rename aborted.".format(args.rename))
       else:
         print("Renaming servo ID {} to {}".format(args.id, args.rename))
-        c.send(args.id, 13, (args.rename,))
+        c.send(args.id, 3, bytearray(pack('=BB', 3,args.rename)))
+        c.read_parsed(length=6, expectedid=args.id, expectederr=0, expectedparams=0)
         print("Verifying the servo now answers to new ID")
-        c.send(args.rename, 14)
-        (sid, cmd, params) = c.read_parsed(length=7, expectedcmd=14, expectedparams=1)
-        if sid != args.rename or sid != params[0]:
-          print("Querying for response from ID {} failed, we got answer from ID {}/{} instead.".format(args.rename, sid, params[0]))
+        c.send(args.rename, 1)
+        (sid, cmd, params) = c.read_parsed(length=6, expectederr=0, expectedparams=0)
+        if sid != args.rename:
+          print("Querying for response from ID {} failed, we got answer from ID {}/{} instead.".format(args.rename, sid))
         else:
           print("Servo successfully renamed to ID {}".format(args.rename))
-  elif args.spin != None: # Zero is a valid parameter.
-    if args.spin < -1000 or args.spin > 1000:
-      print("Servo spin speed {} is outside valid range of -1000 to 1000".format(args.spin))
+  elif args.spin != None: # Zero is a valid parameter
+    if args.spin < 0 or args.spin > 2047:
+      print("Servo spin speed {} is outside valid range of 0 to 2047".format(args.spin))
     else:
-      print("Spinning motor of servo {} at rate of {}".format(args.id, args.spin))
-      c.send(args.id, 29, bytearray(pack('hh', 1, args.spin)))
+      print("Spinning motor of servo {} at speed {}".format(args.id, args.spin))
+      c.send(args.id, 3, bytearray(pack('=Bhh',6, 0, 0))) # Make sure we're in wheel mode
+      c.read_parsed(length=6, expectedid=args.id, expectederr=0, expectedparams=0)
+      c.send(args.id, 3, bytearray(pack('=Bh',32, args.spin)))
+      c.read_parsed(length=6, expectedid=args.id, expectederr=0, expectedparams=0)
   elif args.unload:
-    c.send(args.id, 31, (0,))
+    print("Unloading servo ID {}".format(args.id))
+    c.send(args.id, 3, (24,0))
+    c.read_parsed(length=6, expectedid=args.id, expectederr=0, expectedparams=0)
+  elif args.reset:
+    print("Reset servo ID {} to factory defaults".format(args.id))
+    c.send(args.id, 6, None)
+    print(bytetohex(c.read_raw()))
   elif args.voltage:
-    c.send(args.id, 27)
-    (sid, cmd, params) = c.read_parsed(length=8, expectedcmd=27, expectedparams=2)
-    voltage = unpack('h', params)[0]
-    print("Servo {} reports input voltage of {}".format(sid, voltage/1000.0))
+    c.send(args.id, 2, (42,1))
+    (sid, err, params) = c.read_parsed(length=7, expectedid=args.id, expectederr=0, expectedparams=1)
+    voltage = params[0]
+    print("Servo {} reports input voltage of {}".format(sid, voltage/10.0))
+  elif args.location:
+    c.send(args.id, 2, (36,2))
+    (sid, err, params) = c.read_parsed(length=8, expectedid=args.id)
+    position=unpack('h',params)[0]
+    print("Servo current locaton {} with err {}".format(position, err))
   else:
     # None of the actions were specified? Show help screen.
     parser.print_help()
