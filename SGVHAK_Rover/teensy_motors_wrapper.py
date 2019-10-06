@@ -23,15 +23,18 @@ class teensy_motors_wrapper:
     Read serial port connection parameters from JSON configuration file
     and open the port.
     """
+    
     # Read parameter file
     config = configuration.configuration("teensy_motors")
     connectparams = config.load()['connect']
+    
     # Open serial port with parameters
     s = serial.Serial()
     s.baudrate = connectparams['baudrate']
     s.port = connectparams['port']
     s.timeout = connectparams['timeout']
     s.open()
+    
     if s.is_open:
       self.sp = s
 
