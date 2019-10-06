@@ -23,19 +23,15 @@ class teensy_motors_wrapper:
     Read serial port connection parameters from JSON configuration file
     and open the port.
     """
-    print("ABBBBBB")
     # Read parameter file
     config = configuration.configuration("teensy_motors")
     connectparams = config.load()['connect']
-    print("ACCCCCCCCC")
     # Open serial port with parameters
     s = serial.Serial()
     s.baudrate = connectparams['baudrate']
     s.port = connectparams['port']
     s.timeout = connectparams['timeout']
-    print("ADDDDD")
     s.open()
-    print("AEEEEE")
     if s.is_open:
       self.sp = s
 
@@ -121,8 +117,8 @@ class teensy_motors_wrapper:
 if __name__ == "__main__":
   """
   Command line interface to work with teensy serial motor driver.
-  Implements a subset of the servo's functionality
-  * Spin at a specified speed. (Motor mode)
+  Implements a subset of the teensy's functionality
+  * Spin at a specified speed.
   * Unload and power down motors
 
   based on similar interface in lewansoul_wrapper.py
@@ -131,16 +127,13 @@ if __name__ == "__main__":
 
   parser = argparse.ArgumentParser(description="Teensy Serial Motor Driver Command Line Utility")
 
-  parser.add_argument("-id", "--id", help="Servo identifier integer 0-253. 254 is broadcast ID.", type=int, default=1)
-  parser.add_argument("-t", "--time", help="Time duration for action", type=int, default=0)
+  parser.add_argument("-id", "--id", help="Motor identifier integer 0-253. ", type=int, default=1)
+  parser.add_argument("-t", "--time", help="Time duration for action", type=int, default=0)  #not currently implemented
   parser.add_argument("-i", "--inverted", help="Invert motor direction", action="store_true")
   group = parser.add_mutually_exclusive_group()
-  #group.add_argument("-m", "--move", help="Move servo to specified position 0-1000", type=int)
-  #group.add_argument("-q", "--queryid", help="Query for servo ID", action="store_true")
-  #group.add_argument("-r", "--rename", help="Rename servo identifier", type=int)
   group.add_argument("-s", "--spin", help="Spin the motor at a specified speed from -100 to 100", type=int)
   group.add_argument("-u", "--unload", help="Power down motor", action="store_true")
-  group.add_argument("-v", "--voltage", help="Read current input voltage", action="store_true")
+  group.add_argument("-v", "--voltage", help="Read current input voltage", action="store_true")  #not currently implemented
   args = parser.parse_args()
 
   c = teensy_motors_wrapper()
