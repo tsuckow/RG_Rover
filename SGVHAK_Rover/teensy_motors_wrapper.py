@@ -133,6 +133,7 @@ if __name__ == "__main__":
 
   parser.add_argument("-id", "--id", help="Servo identifier integer 0-253. 254 is broadcast ID.", type=int, default=1)
   parser.add_argument("-t", "--time", help="Time duration for action", type=int, default=0)
+  parser.add_argument("-i", "--inverted", help="Invert motor direction", action="store_true")
   group = parser.add_mutually_exclusive_group()
   #group.add_argument("-m", "--move", help="Move servo to specified position 0-1000", type=int)
   #group.add_argument("-q", "--queryid", help="Query for servo ID", action="store_true")
@@ -150,9 +151,9 @@ if __name__ == "__main__":
       print("Motor spin speed {} is outside valid range of -100 to 100".format(args.spin))
     else:
       print("Spinning motor with id {} at rate of {}".format(args.id, args.spin))
-      c.velocity((args.id, False), args.spin)
+      c.velocity((args.id, args.inverted), args.spin)
   elif args.unload:
-    c.velocity((args.id, False), 0)
+    c.velocity((args.id, args.inverted), 0)
   elif args.voltage:
     #c.send(args.id, 27)
     #(sid, cmd, params) = c.read_parsed(length=8, expectedcmd=27, expectedparams=2)
