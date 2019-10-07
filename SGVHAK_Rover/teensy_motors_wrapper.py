@@ -23,18 +23,18 @@ class teensy_motors_wrapper:
     Read serial port connection parameters from JSON configuration file
     and open the port.
     """
-
+    
     # Read parameter file
     config = configuration.configuration("teensy_motors")
     connectparams = config.load()['connect']
-
+    
     # Open serial port with parameters
     s = serial.Serial()
     s.baudrate = connectparams['baudrate']
     s.port = connectparams['port']
     s.timeout = connectparams['timeout']
     s.open()
-
+    
     if s.is_open:
       self.sp = s
 
@@ -116,4 +116,49 @@ class teensy_motors_wrapper:
 
   def input_voltage(self, id):
     return 0
+
+if __name__ == "__main__":
+  """
+  Command line interface to work with teensy serial motor driver.
+  Implements a subset of the teensy's functionality
+  * Spin at a specified speed.
+  * Unload and power down motors
+
+  based on similar interface in lewansoul_wrapper.py
+  """
+  import argparse
+
+  parser = argparse.ArgumentParser(description="Teensy Serial Motor Driver Command Line Utility")
+
+  parser.add_argument("-id", "--id", help="Motor identifier integer 0-253. ", type=int, default=1)
+  parser.add_argument("-t", "--time", help="Time duration for action", type=int, default=0)  #not currently implemented
+  parser.add_argument("-i", "--inverted", help="Invert motor direction", action="store_true")
+  group = parser.add_mutually_exclusive_group()
+  group.add_argument("-s", "--spin", help="Spin the motor at a specified speed from -100 to 100", type=int)
+  group.add_argument("-u", "--unload", help="Power down motor", action="store_true")
+  group.add_argument("-v", "--voltage", help="Read current input voltage", action="store_true")  #not currently implemented
+  args = parser.parse_args()
+
+  c = teensy_motors_wrapper()
+  c.connect()
+
+  if args.spin != None: # Zero is a valid parameter.
+    if args.spin < -100 or args.spin > 100:
+      print("Motor spin speed {} is outside valid range of -100 to 100".format(args.spin))
+    else:
+      print("Spinning motor with id {} at rate of {}".format(args.id, args.spin))
+      c.velocity((args.id, args.inverted), args.spin)
+  elif args.unload:
+    c.velocity((args.id, args.inverted), 0)
+  elif args.voltage:
+    #c.send(args.id, 27)
+    #(sid, cmd, params) = c.read_parsed(length=8, expectedcmd=27, expectedparams=2)
+    #voltage = unpack('h', params)[0]
+    #print("Servo {} reports input voltage of {}".format(sid, voltage/1000.0))
+    print("teensy voltage check not yet implemented")
+  else:
+    # None of the actions were specified? Show help screen.
+    parser.print_help()
+
+  c.close()
 
